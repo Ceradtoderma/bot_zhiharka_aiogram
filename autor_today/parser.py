@@ -8,15 +8,12 @@ class ParsAT:
 
     def __init__(self, url, login='', password='', name='data' ):
 
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.binary_location = os.environ.get('GOOGLE_CHROME_SHIM', None)
-
 
         self.log = login
         self.password = password
         self.url = url
         self.name = name
-        self.driver = webdriver.Chrome(executable_path="chromedriver", chrome_options=chrome_options)
+        self.driver = webdriver.Chrome(executable_path="chromedriver")
         self.text = ''
         self.state = 'ok'
         self.pars = True
