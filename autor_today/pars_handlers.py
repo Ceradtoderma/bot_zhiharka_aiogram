@@ -8,7 +8,6 @@ from keyboards import keyboards
 import threading
 
 
-
 class Parser_State(StatesGroup):
     login_state = State()
     password_state = State()
@@ -34,10 +33,12 @@ async def get_login(message: types.Message, state: FSMContext):
     else:
         await message.answer('Введите корректный логин')
 
+
 async def get_password(message: types.Message, state: FSMContext):
     await state.update_data(password=message.text)
     await message.answer('Введите ссылку')
     await Parser_State.next()
+
 
 async def get_ready(message: types.Message, state: FSMContext):
     await state.update_data(url=message.text.lower())
@@ -51,53 +52,99 @@ async def get_ready(message: types.Message, state: FSMContext):
                              f'ссылка на книгу: {user_data["url"]}')
         await message.answer('Начать парсинг?', reply_markup=keyboards['parser_start'])
 
+
 async def to_go(call: types.CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     cur_page = ''
-    try:
-        if user_data['login'] == '0':
-            par = ParsAT(user_data['url'])
-            threading.Thread(target=par.get_text).start()
+
+    if user_data['login'] == '0':
+        par = ParsAT(user_data['url'])
+        threading.Thread(target=par.get_text).start()
+    else:
+        par = ParsAT(user_data['url'], user_data['login'], user_data['password'])
+        threading.Thread(target=par.login).start()
+
+    while par.pars:
+        if cur_page == par.cur_chapter:
+            continue
         else:
-            par = ParsAT(user_data['url'], user_data['login'], user_data['password'])
-            threading.Thread(target=par.login).start()
-
-        while par.pars:
-            if cur_page == par.cur_chapter:
-                continue
-            else:
-                cur_page = par.cur_chapter
-                await call.message.answer(str(cur_page))
-        if par.state != 'ok':
-            await call.message.answer('Ошибка! текст ошибки: ')
-            if par.error == 'Неверный логин или пароль.':
-                await Parser_State.login_state.set()
-                await call.message.answer(f'"{par.error}"')
-                await call.message.answer('Введите логин')
-            else:
-                await call.message.answer(f'"{par.error}"')
-                await Parser_State.ready_state.set()
-                if user_data.get('password', "0") == '0':
-                    await call.message.answer('Попробуйте ввести ссылку еще раз', reply_markup=keyboards['parser_login'])
-                else:
-                    await call.message.answer('Попробуйте ввести ссылку еще раз')
-
+            cur_page = par.cur_chapter
+            await call.message.answer(str(cur_page))
+    if par.state != 'ok':
+        await call.message.answer('Ошибка! текст ошибки: ')
+        if par.error == 'Неверный логин или пароль.':
+            await Parser_State.login_state.set()
+            await call.message.answer(f'"{par.error}"')
+            await call.message.answer('Введите логин')
         else:
-            await call.message.answer('Парсинг завершен')
-
-            try:
-                await call.message.reply_document(open(par.name + '.txt', 'rb'))
-            except:
-                await call.message.answer('Парсинг не удался')
-
+            await call.message.answer(f'"{par.error}"')
             await Parser_State.ready_state.set()
-            await call.message.answer('Спарсим еще что-нибудь? Введите ссылку')
+            if user_data.get('password', "0") == '0':
+                await call.message.answer('Попробуйте ввести ссылку еще раз', reply_markup=keyboards['parser_login'])
+            else:
+                await call.message.answer('Попробуйте ввести ссылку еще раз')
 
-    except:
-        await call.message.answer('Ошибка сервера')
-    finally:
-        await call.answer('')
+    else:
+        await call.message.answer('Парсинг завершен')
 
+        try:
+            await call.message.reply_document(open(par.name + '.txt', 'rb'))
+        except:
+            await call.message.answer('Парсинг не удался')
+
+        await Parser_State.ready_state.set()
+        await call.message.answer('Спарсим еще что-нибудь? Введите ссылку')
+
+    await call.answer('')
+
+
+#
+# async def to_go(call: types.CallbackQuery, state: FSMContext):
+#     user_data = await state.get_data()
+#     cur_page = ''
+#     try:
+#         if user_data['login'] == '0':
+#             par = ParsAT(user_data['url'])
+#             threading.Thread(target=par.get_text).start()
+#         else:
+#             par = ParsAT(user_data['url'], user_data['login'], user_data['password'])
+#             threading.Thread(target=par.login).start()
+#
+#         while par.pars:
+#             if cur_page == par.cur_chapter:
+#                 continue
+#             else:
+#                 cur_page = par.cur_chapter
+#                 await call.message.answer(str(cur_page))
+#         if par.state != 'ok':
+#             await call.message.answer('Ошибка! текст ошибки: ')
+#             if par.error == 'Неверный логин или пароль.':
+#                 await Parser_State.login_state.set()
+#                 await call.message.answer(f'"{par.error}"')
+#                 await call.message.answer('Введите логин')
+#             else:
+#                 await call.message.answer(f'"{par.error}"')
+#                 await Parser_State.ready_state.set()
+#                 if user_data.get('password', "0") == '0':
+#                     await call.message.answer('Попробуйте ввести ссылку еще раз', reply_markup=keyboards['parser_login'])
+#                 else:
+#                     await call.message.answer('Попробуйте ввести ссылку еще раз')
+#
+#         else:
+#             await call.message.answer('Парсинг завершен')
+#
+#             try:
+#                 await call.message.reply_document(open(par.name + '.txt', 'rb'))
+#             except:
+#                 await call.message.answer('Парсинг не удался')
+#
+#             await Parser_State.ready_state.set()
+#             await call.message.answer('Спарсим еще что-нибудь? Введите ссылку')
+#
+#     except:
+#         await call.message.answer('Ошибка сервера')
+#     finally:
+#         await call.answer('')
 
 
 async def error(message: types.Message, state: FSMContext):
