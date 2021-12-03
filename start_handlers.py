@@ -8,6 +8,7 @@ from autor_today.pars_handlers import register_pars_handlers
 from echo.echo_handlers import register_echo_handlers
 from test.test_handlers import register_test_handlers
 from weather.weather_handlers import register_weather_handlers
+from cheese.cheese_handlers import register_cheese_handlers
 
 
 
@@ -38,6 +39,11 @@ async def inline_answer(call: types.CallbackQuery):
         await call.answer('Погода в выбранном городе')
         await call.message.answer('Введите название города')
 
+    if call.data == 'cheese':
+        await MainState.cheese_state.set()
+        await call.answer('')
+        await call.message.answer('Приветствую в сырном отделе!', reply_markup=keyboards['cheese_start'])
+
 
     if call.data == 'test':
         await call.answer()
@@ -57,4 +63,6 @@ def register_handler(dp: Dispatcher):
     register_weather_handlers(dp)
     register_echo_handlers(dp)
     register_pars_handlers(dp)
+    register_cheese_handlers(dp)
+
     dp.register_message_handler(error, state='*')

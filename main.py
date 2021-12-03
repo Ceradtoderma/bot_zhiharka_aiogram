@@ -1,16 +1,13 @@
 import logging
 from aiogram import Bot, Dispatcher, executor
 from start_handlers import register_handler
-
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import os
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
-TOKEN = os.environ['TOKEN']
-print(TOKEN)
 
 logging.basicConfig(level=logging.INFO)
 
-bot = Bot(token=TOKEN)
+bot = Bot(token=os.environ['TOKEN'])
 # Диспетчер для бота
 dp = Dispatcher(bot, storage=MemoryStorage())
 

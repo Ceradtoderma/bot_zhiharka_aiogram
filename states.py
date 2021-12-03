@@ -7,3 +7,4 @@ class MainState(StatesGroup):
     echo_state = State()
     test_state = State()
     weather_state = State()
+    cheese_state = State()
