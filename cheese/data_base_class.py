@@ -59,7 +59,7 @@ class DataBase:
         if len(self.args) == 1:
             try:
                 self.cursor.execute(f"""SELECT * from cheese where id='{self.args[0]}'""")
-                record = self.cursor.fetchall()
+                record = self.cursor.fetchone()
                 return record
             except (Exception, Error) as error:
                 self.err = "Ошибка при работе с PostgreSQL: \n" + str(error)

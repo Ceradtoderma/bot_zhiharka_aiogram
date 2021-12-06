@@ -1,14 +1,13 @@
 from aiogram import types, Dispatcher
-from aiogram.dispatcher.filters import Text
-from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
+from keyboards import keyboards
 from start_handlers import MainState
+from bot import dp
 
+
+@dp.message_handler(state=MainState.echo_state)
 async def echo(message: types.Message, state: FSMContext):
     await message.answer(message.text)
     if message.text.lower() == 'стоп':
         await state.finish()
-        await message.answer('Эхо-режим выключен')
-
-def register_echo_handlers(dp: Dispatcher):
-    dp.register_message_handler(echo, state=MainState.echo_state)
+        await message.answer('Эхо-режим выключен', reply_markup=keyboards['start'])

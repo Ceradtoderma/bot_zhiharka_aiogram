@@ -6,14 +6,14 @@ import os
 
 class ParsAT:
 
-    def __init__(self, url, login='', password='', name='data' ):
-
+    def __init__(self, url, login='', password='', name='data'):
 
         self.log = login
         self.password = password
         self.url = url
         self.name = name
-        self.driver = webdriver.Chrome(executable_path="chromedriver")
+        self.driver = webdriver.Chrome(
+            executable_path="C:\\Users\\aisav\\PycharmProjects\\bot_zhiharka_aiogram\\autor_today\\chromedriver.exe")
         self.text = ''
         self.state = 'ok'
         self.pars = True

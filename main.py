@@ -1,12 +1,15 @@
 import logging
 from aiogram import Bot, Dispatcher, executor
-from start_handlers import register_handler
+import start_handlers
+import autor_today.pars_handlers
+import cheese.cheese_handlers
+import weather.weather_handlers
+import echo.echo_handlers
 from bot import bot, dp
+
 
 logging.basicConfig(level=logging.INFO)
 
-
-register_handler(dp)
 
 
 

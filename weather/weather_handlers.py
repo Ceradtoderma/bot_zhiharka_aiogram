@@ -1,20 +1,22 @@
 from aiogram import types, Dispatcher
-from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 import weather.func
-from start_handlers import MainState
+from bot import dp
+from states import MainState
 from keyboards import keyboards
+
 
 class WeatherState(StatesGroup):
     choise_day = State()
 
-
+@dp.message_handler(state=MainState.weather_state)
 async def choise_day(message: types.Message, state: FSMContext):
     await state.update_data(city=message.text)
     await WeatherState.choise_day.set()
     await message.answer('На когда смотрим погоду?', reply_markup=keyboards['weather_day'])
 
+@dp.callback_query_handler(state=WeatherState.choise_day)
 async def to_go(call: types.CallbackQuery, state: FSMContext):
     day = int(call.data)
     data = await state.get_data()
@@ -36,6 +38,3 @@ async def to_go(call: types.CallbackQuery, state: FSMContext):
         await MainState.weather_state.set()
     await call.answer('')
 
-def register_weather_handlers(dp: Dispatcher):
-    dp.register_message_handler(choise_day, state=MainState.weather_state)
-    dp.register_callback_query_handler(to_go, state=WeatherState.choise_day)

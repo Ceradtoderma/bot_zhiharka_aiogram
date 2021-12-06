@@ -1,9 +1,9 @@
 from aiogram import types, Dispatcher
-from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from autor_today.parser import ParsAT
-from start_handlers import MainState
+from bot import dp
+from states import MainState
 from keyboards import keyboards
 import threading
 
@@ -14,7 +14,7 @@ class Parser_State(StatesGroup):
     ready_state = State()
     to_go = State()
 
-
+@dp.callback_query_handler(state=[MainState.parser_state, Parser_State.ready_state])
 async def auth(call: types.CallbackQuery, state: FSMContext):
     if call.data == 'login':
         await call.message.answer('Введите логин')
@@ -24,7 +24,7 @@ async def auth(call: types.CallbackQuery, state: FSMContext):
         await Parser_State.ready_state.set()
         await call.message.answer('Введите ссылку')
 
-
+@dp.message_handler(state=Parser_State.login_state)
 async def get_login(message: types.Message, state: FSMContext):
     if '@' in message.text:
         await state.update_data(login=message.text.lower())
@@ -33,13 +33,13 @@ async def get_login(message: types.Message, state: FSMContext):
     else:
         await message.answer('Введите корректный логин')
 
-
+@dp.message_handler(state=Parser_State.password_state)
 async def get_password(message: types.Message, state: FSMContext):
     await state.update_data(password=message.text)
     await message.answer('Введите ссылку')
     await Parser_State.next()
 
-
+@dp.message_handler(state=Parser_State.ready_state)
 async def get_ready(message: types.Message, state: FSMContext):
     await state.update_data(url=message.text.lower())
     user_data = await state.get_data()
@@ -54,7 +54,7 @@ async def get_ready(message: types.Message, state: FSMContext):
 
 
 
-
+@dp.callback_query_handler(state=Parser_State.to_go)
 async def to_go(call: types.CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     cur_page = ''
@@ -98,11 +98,12 @@ async def to_go(call: types.CallbackQuery, state: FSMContext):
             await call.message.answer('Спарсим еще что-нибудь? Введите ссылку')
 
     except:
+
         await call.message.answer('Ошибка сервера')
     finally:
         await call.answer('')
 
-
+@dp.message_handler(state=[MainState.parser_state, Parser_State.to_go])
 async def error(message: types.Message, state: FSMContext):
     data = await state.get_data()
     if data.get('login', '1') == '1':
@@ -110,12 +111,3 @@ async def error(message: types.Message, state: FSMContext):
     else:
         await message.answer('Нужно Начать парсинг')
 
-
-def register_pars_handlers(dp: Dispatcher):
-    dp.register_callback_query_handler(auth, state=[MainState.parser_state, Parser_State.ready_state])
-    dp.register_message_handler(get_login, state=Parser_State.login_state)
-    dp.register_message_handler(get_password, state=Parser_State.password_state)
-    dp.register_message_handler(get_ready, state=Parser_State.ready_state)
-    dp.register_callback_query_handler(to_go, state=Parser_State.to_go)
-
-    dp.register_message_handler(error, state=[MainState.parser_state, Parser_State.to_go])

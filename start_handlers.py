@@ -2,24 +2,19 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from keyboards import keyboards
 from states import MainState
-
-
-from autor_today.pars_handlers import register_pars_handlers
-from echo.echo_handlers import register_echo_handlers
-from weather.weather_handlers import register_weather_handlers
-from cheese.cheese_handlers import register_cheese_handlers
+from bot import bot, dp
 
 
 
-
+@dp.message_handler(commands='start', state='*')
 async def start(message: types.Message, state: FSMContext):
     await state.finish()
     await MainState.main_state.set()
-    await message.answer('Реакция на команду /start')
+    await message.answer('Реакция на команду /start', reply_markup=types.ReplyKeyboardRemove())
     await message.answer("Что делаем?", reply_markup=keyboards['start'])
 
 
-
+@dp.callback_query_handler(state=MainState.main_state)
 async def inline_answer(call: types.CallbackQuery):
     if call.data == 'echo':
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True).add('Стоп')
@@ -44,19 +39,10 @@ async def inline_answer(call: types.CallbackQuery):
         await call.message.answer('Приветствую в сырном отделе!', reply_markup=keyboards['cheese_start'])
 
 
-
+@dp.message_handler()
 async def error(message: types.Message, state: FSMContext):
     await message.answer('Ты ввёл что-то неправильно. Давай еще раз расскажу,что я могу!',
                          reply_markup=keyboards['start'])
     await MainState.main_state.set()
 
 
-def register_handler(dp: Dispatcher):
-    dp.register_message_handler(start, commands='start', state='*')
-    dp.register_callback_query_handler(inline_answer, state=MainState.main_state)
-    register_weather_handlers(dp)
-    register_echo_handlers(dp)
-    register_pars_handlers(dp)
-    register_cheese_handlers(dp)
-
-    dp.register_message_handler(error, state='*')
