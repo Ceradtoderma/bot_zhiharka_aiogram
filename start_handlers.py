@@ -6,7 +6,6 @@ from states import MainState
 
 from autor_today.pars_handlers import register_pars_handlers
 from echo.echo_handlers import register_echo_handlers
-from test.test_handlers import register_test_handlers
 from weather.weather_handlers import register_weather_handlers
 from cheese.cheese_handlers import register_cheese_handlers
 
@@ -45,10 +44,6 @@ async def inline_answer(call: types.CallbackQuery):
         await call.message.answer('Приветствую в сырном отделе!', reply_markup=keyboards['cheese_start'])
 
 
-    if call.data == 'test':
-        await call.answer()
-        await MainState.test_state.set()
-
 
 async def error(message: types.Message, state: FSMContext):
     await message.answer('Ты ввёл что-то неправильно. Давай еще раз расскажу,что я могу!',
@@ -59,7 +54,6 @@ async def error(message: types.Message, state: FSMContext):
 def register_handler(dp: Dispatcher):
     dp.register_message_handler(start, commands='start', state='*')
     dp.register_callback_query_handler(inline_answer, state=MainState.main_state)
-    register_test_handlers(dp)
     register_weather_handlers(dp)
     register_echo_handlers(dp)
     register_pars_handlers(dp)

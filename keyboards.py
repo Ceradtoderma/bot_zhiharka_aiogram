@@ -5,7 +5,6 @@ buttons = [
     types.InlineKeyboardButton('Эхо-бот', callback_data='echo'),
     types.InlineKeyboardButton('Парсер', callback_data='parser'),
     types.InlineKeyboardButton('Погода', callback_data='weather'),
-    types.InlineKeyboardButton('Тест', callback_data='test'),
     types.InlineKeyboardButton('Сыр', callback_data='cheese'),
 ]
 start.add(*buttons)
