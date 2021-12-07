@@ -3,6 +3,7 @@ from aiogram.dispatcher import FSMContext
 import weather.func
 from bot import bot, dp, MainState
 from keyboards import keyboards
+from data_base_class import DataBase
 
 
 
@@ -10,6 +11,10 @@ from keyboards import keyboards
 @dp.message_handler(state=MainState.weather_state)
 async def choise_day(message: types.Message, state: FSMContext):
     await state.update_data(city=message.text)
+    db = DataBase()
+    sql_query = f"UPDATE users SET city = '{message.text}' WHERE userid={message.from_user.id}"
+    db.update(sql_query)
+    db.close()
     await MainState.weather_state_day.set()
     await message.answer('На когда смотрим погоду?', reply_markup=keyboards['weather_day'])
 

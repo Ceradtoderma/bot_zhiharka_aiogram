@@ -38,10 +38,8 @@ async def weather(call: types.CallbackQuery, state: FSMContext):
     sql_query = f"SELECT city FROM users WHERE userid={call.from_user.id}"
     db = DataBase()
     city = db.read_one(sql_query)
+    db.close()
     if city[0]:
-        sql_query = f"UPDATE users SET city = {city[0]} WHERE userid={call.from_user.id}"
-        db.update(sql_query)
-        db.close()
         await state.update_data(city=city[0])
         await MainState.weather_state_day.set()
         await call.message.answer('На когда смотрим погоду?', reply_markup=keyboards['weather_day'])
