@@ -1,8 +1,7 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from keyboards import keyboards
-from states import MainState
-from bot import bot, dp
+from bot import bot, dp, MainState
 
 
 

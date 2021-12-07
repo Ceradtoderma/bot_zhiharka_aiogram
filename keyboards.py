@@ -1,5 +1,6 @@
 from aiogram import types
 
+#
 start = types.InlineKeyboardMarkup()
 buttons = [
     types.InlineKeyboardButton('Эхо-бот', callback_data='echo'),
@@ -32,7 +33,14 @@ cheese_start.add(types.InlineKeyboardButton('Все сыры', callback_data='al
 cheese_start.add(types.InlineKeyboardButton('Добавить сыр', callback_data='add_cheese'))
 cheese_start.add(types.InlineKeyboardButton('Посмотреть конкретный', callback_data='one_cheese'))
 
+cheese_del = types.InlineKeyboardMarkup()
+btn_del = types.InlineKeyboardButton('Удалить', callback_data='del')
+btn_edit = types.InlineKeyboardButton('Редактировать', callback_data='edit')
+cheese_del.add(btn_del, btn_edit)
 
+cheese_edit = types.InlineKeyboardMarkup()
+name = types.InlineKeyboardButton('Название', callback_data='name')
+cheese_edit.add(name)
 keyboards = {
     'start': start,
     'weather_day': weather_day,
@@ -40,5 +48,7 @@ keyboards = {
     'parser_auth': parser_auth,
     'parser_login': parser_login,
     'cheese_start': cheese_start,
+    'cheese_del': cheese_del,
+    'cheese_edit': cheese_edit,
 
 }

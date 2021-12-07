@@ -2,8 +2,7 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from autor_today.parser import ParsAT
-from bot import dp
-from states import MainState
+from bot import dp, MainState
 from keyboards import keyboards
 import threading
 
