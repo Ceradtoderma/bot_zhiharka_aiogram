@@ -3,6 +3,7 @@ import urllib.parse as urlparse
 from psycopg2 import Error
 import os
 
+
 class DataBase:
 
     def __init__(self, *args):
@@ -23,53 +24,38 @@ class DataBase:
         self.cursor = self.connection.cursor()
         self.err = ''
 
-    def insert(self, *args):
-        if len(args) != 4:
-            self.err = f'Аргументов должно быть 4, а получено {len(args)}'
-        else:
-            try:
-                insert_query = " INSERT INTO cheese (NAME, PRICE, DESCRIPTION, IMG) VALUES (%s, %s, %s, %s)"
-                data_tuple = args
-                self.cursor.execute(insert_query, data_tuple)
-                self.connection.commit()
-            except (Exception, Error) as error:
-                self.err = "Ошибка при работе с PostgreSQL" + error
-                print("Ошибка при работе с PostgreSQL", error)
-
-    def read_all(self):
+    def read_all(self, sql_query):
         try:
-            self.cursor.execute("SELECT * from cheese")
+            self.cursor.execute(sql_query)
             record = self.cursor.fetchall()
             return record
 
         except (Exception, Error) as error:
             self.err = "Ошибка при работе с PostgreSQL: \n" + error
 
-    def read_name(self, name):
+    def read_one(self, sql_query):
         try:
-            self.cursor.execute(f"""SELECT * from cheese where name LIKE '{name}%'""")
-            record = self.cursor.fetchall()
-            return record
-
-        except (Exception, Error) as error:
-            self.err = "Ошибка при работе с PostgreSQL: \n" + str(error)
-
-    def read_id(self, id):
-        try:
-            self.cursor.execute(f"""SELECT * from cheese where id='{id}'""")
+            self.cursor.execute(sql_query)
             record = self.cursor.fetchone()
             return record
         except (Exception, Error) as error:
             self.err = "Ошибка при работе с PostgreSQL: \n" + str(error)
 
-    def delete(self, id):
+    def insert(self, sql_query, *args):
         try:
-            self.cursor.execute(f"DELETE FROM cheese WHERE id={id}")
+            self.cursor.execute(sql_query, args)
             self.connection.commit()
 
         except (Exception, Error) as error:
             self.err = "Ошибка при работе с PostgreSQL: \n" + str(error)
 
+    def update(self, sql_query):
+        try:
+            self.cursor.execute(sql_query)
+            self.connection.commit()
+
+        except (Exception, Error) as error:
+            self.err = "Ошибка при работе с PostgreSQL: \n" + str(error)
 
     def close(self):
 

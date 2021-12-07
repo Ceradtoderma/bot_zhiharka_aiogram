@@ -1,7 +1,7 @@
 from aiogram import types
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
-from cheese.data_base_class import DataBase
+from data_base_class import DataBase
 from start_handlers import MainState
 from cheese.func import upload_photo
 from keyboards import keyboards
@@ -27,8 +27,9 @@ class AddCheese(StatesGroup):
 @dp.callback_query_handler(lambda c: c.data == 'all_cheese', state='*')
 async def all_cheese(call: types.CallbackQuery):
     await call.message.answer('Посмотрим все сыры, которые у нас есть!')
+    sql_query = "SELECT * from cheese"
     db = DataBase()
-    res = db.read_all()
+    res = db.read_all(sql_query)
     db.close()
     keyboard = types.InlineKeyboardMarkup()
     for i in res:
@@ -56,8 +57,9 @@ async def one_cheese(call: types.CallbackQuery):
 @dp.callback_query_handler(lambda c: c.data == 'del', state='*')
 async def delete(call: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
+    sql_query = f"DELETE FROM cheese WHERE id={data['id']}"
     db = DataBase()
-    db.delete(data['id'])
+    db.update(sql_query)
     db.close()
     await call.message.answer('Удалено', reply_markup=keyboards['cheese_start'])
 
@@ -66,17 +68,18 @@ async def delete(call: types.CallbackQuery, state: FSMContext):
 async def edit(call: types.CallbackQuery, state: FSMContext):
     await CheeseState.edit.set()
     await call.message.answer('Что редактируем?', reply_markup=keyboards['cheese_edit'])
-    await call.message.answer('Изменено', reply_markup=keyboards['cheese_start'])
 
 
 # состояние поиска по имени one_cheese
 
 @dp.message_handler(state=CheeseState.one_cheese)
 async def one_cheese(message: types.Message, state: FSMContext):
+    sql_query = f"SELECT * from cheese where name LIKE '{message.text}%'"
     db = DataBase()
-    res = db.read_name(message.text)
+    res = db.read_all(sql_query)
+    db.close()
     if len(res) == 1:
-        one_cheese = db.read_id(res[0][0])
+        one_cheese = db.read_one(res[0][0])
         await state.update_data(id=res[0][0])
         await MainState.cheese_state.set()
         await message.answer(f'{fmt.hide_link(one_cheese[4])}{one_cheese[1]}\nЦена: {one_cheese[2]}',
@@ -99,12 +102,30 @@ async def one_cheese(message: types.Message, state: FSMContext):
 # Состояние выбора из вариантов
 @dp.callback_query_handler(state=CheeseState.choise)
 async def choise(call: types.CallbackQuery, state: FSMContext):
+    sql_query = f"SELECT * from cheese where id='{call.data}'"
     db = DataBase()
-    res = db.read_id(call.data)
+    res = db.read_one(sql_query)
+    db.close()
     await state.update_data(id=call.data)
-    await MainState.cheese_state.set()
     await call.message.answer(f'{fmt.hide_link(res[4])}{res[1]}\nЦена: {res[2]}', parse_mode=types.ParseMode.HTML)
     await call.message.answer(res[3], reply_markup=keyboards['cheese_del'])
+    await call.answer()
+
+# Состояние редактирования
+@dp.callback_query_handler(state=CheeseState.edit)
+async def start_edit(call: types.CallbackQuery, state: FSMContext):
+    await state.update_data(field=call.data)
+    await call.message.answer('Введите новое значение')
+    await call.answer()
+
+@dp.message_handler(state=CheeseState.edit)
+async def edit(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    sql_query = f"UPDATE cheese SET {data['field']} = '{message.text}' WHERE id={data['id']}"
+    db = DataBase()
+    db.update(sql_query)
+    db.close()
+    await message.answer('Успешно изменено!', reply_markup=keyboards['cheese_start'])
 
 
 # Добавление нового сыра шаг за шагом
@@ -150,9 +171,10 @@ async def insert(call: types.CallbackQuery, state: FSMContext):
         img = upload_photo(data['url_img'], data['name'])
     except:
         img = data['url_img']
+    sql_query = "INSERT INTO cheese (NAME, PRICE, DESCRIPTION, IMG) VALUES (%s, %s, %s, %s)"
     args = (data['name'], data['price'], data['description'], img)
     db = DataBase()
-    db.insert(*args)
+    db.insert(sql_query, *args)
     if db.err:
         await call.message.answer(db.err)
     else:

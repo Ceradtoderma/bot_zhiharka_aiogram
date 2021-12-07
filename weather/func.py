@@ -16,7 +16,7 @@ def find_city(name):
     return lon, lat
 
 
-def get_data(lon, lat, day):
+def get_data_old(lon, lat, day):
 
     weather_data = {}
     param = {
@@ -42,8 +42,33 @@ def get_data(lon, lat, day):
 
     return weather_data
 
+def get_data(lon, lat, day):
+    weather_data = {}
+    param = {
+        'appid': api_weather_key,
+        'exclude': 'current, hourly',
+        'lang': 'ru',
+        'lat': lat,
+        'lon': lon,
+        'units': 'metric'
+    }
+    response = requests.get(weather_api, params=param).json()['daily'][day]
+
+    weather_data['temp_morn'] = int(response['temp']['morn'])
+    weather_data['temp_day'] = int(response['temp']['day'])
+    weather_data['temp_eve'] = int(response['temp']['eve'])
+    weather_data['temp_night'] = int(response['temp']['night'])
+    weather_data['feels_like_morn'] = int(response['feels_like']['morn'])
+    weather_data['feels_like_day'] = int(response['feels_like']['day'])
+    weather_data['feels_like_eve'] = int(response['feels_like']['eve'])
+    weather_data['feels_like_night'] = int(response['feels_like']['night'])
+    weather_data['clouds'] = response['clouds']
+    weather_data['description'] = response['weather'][0]['description']
+    weather_data['url_ico'] = f"http://openweathermap.org/img/wn/{response['weather'][0]['icon']}@4x.png"
+
+    return weather_data
 
 
 if __name__ == '__main__':
     lon, lat = find_city('Ростов-на-Дону')
-    get_data(lon, lat, 0)
+    print(get_data(lon, lat, 0))

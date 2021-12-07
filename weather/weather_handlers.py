@@ -1,35 +1,38 @@
-from aiogram import types, Dispatcher
-from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram import types
 from aiogram.dispatcher import FSMContext
 import weather.func
-from bot import dp, MainState
+from bot import bot, dp, MainState
 from keyboards import keyboards
 
 
-class WeatherState(StatesGroup):
-    choise_day = State()
+
 
 @dp.message_handler(state=MainState.weather_state)
 async def choise_day(message: types.Message, state: FSMContext):
     await state.update_data(city=message.text)
-    await WeatherState.choise_day.set()
+    await MainState.weather_state_day.set()
     await message.answer('На когда смотрим погоду?', reply_markup=keyboards['weather_day'])
 
-@dp.callback_query_handler(state=WeatherState.choise_day)
+
+@dp.callback_query_handler(state=[MainState.weather_state_day, MainState.weather_state])
 async def to_go(call: types.CallbackQuery, state: FSMContext):
+    day_text = {0: 'Сегодня', 1: 'Завтра', 2: 'Послезавтра'}
+
     day = int(call.data)
     data = await state.get_data()
 
     try:
         lon, lat = weather.func.find_city(data['city'])
         weather_data = weather.func.get_data(lon, lat, day)
-        await call.message.answer(f'В {data["city"]} {call.message.text} {weather_data["description"]}.')
+        await bot.send_photo(chat_id=call.message.chat.id, photo=weather_data["url_ico"])
+        await call.message.answer(
+            f'В городе {data["city"]}, {day_text[day].lower()} - {weather_data["description"]}.')
         await call.message.answer(f'Облачность {weather_data["clouds"]}%.')
-        await call.message.answer(f'Утром {weather_data["temp_morn"]}({weather_data["feels_like_morn"]})°C Днём'
-                             f' {weather_data["temp_day"]}({weather_data["feels_like_day"]})°C Вечером  '
-                             f'{weather_data["temp_eve"]}({weather_data["feels_like_eve"]})°C Ночью  '
-                             f'{weather_data["temp_night"]}({weather_data["feels_like_night"]})°C')
-        await call.message.answer('Введите название города')
+        await call.message.answer(f'Утром {weather_data["temp_morn"]}°C, Ощущается как {weather_data["feels_like_morn"]}°C\n'
+                                  f'Днём {weather_data["temp_day"]}°C, Ощущается как {weather_data["feels_like_day"]}°C\n'
+                                  f'Вечером {weather_data["temp_eve"]}°C, Ощущается как {weather_data["feels_like_eve"]}°C\n'
+                                  f'Ночью {weather_data["temp_night"]}°C, Ощущается как {weather_data["feels_like_night"]}°C')
+        await call.message.answer('Посмотрим в другом городе?')
         await MainState.weather_state.set()
 
     except:

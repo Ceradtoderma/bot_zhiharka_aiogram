@@ -40,7 +40,9 @@ cheese_del.add(btn_del, btn_edit)
 
 cheese_edit = types.InlineKeyboardMarkup()
 name = types.InlineKeyboardButton('Название', callback_data='name')
-cheese_edit.add(name)
+description = types.InlineKeyboardButton('Описание', callback_data='description')
+price = types.InlineKeyboardButton('Цена', callback_data='price')
+cheese_edit.add(name, description, price)
 keyboards = {
     'start': start,
     'weather_day': weather_day,
